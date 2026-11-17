@@ -1,0 +1,1 @@
+(async()=>{try{const{data,error}=await db.from('community_streams').select('*').order('starts_at');if(error)throw error;$('status').textContent=data.length?'':'Noch keine Streams eingetragen.';for(const s of data)$('streamlist').append(streamCard(s))}catch(e){$('status').textContent='Streams konnten nicht geladen werden: '+e.message}})();

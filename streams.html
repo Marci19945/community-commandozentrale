@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Streams – Commando Zentrale</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0b1220;
+      color: #e6edf3;
+      margin: 0;
+      padding: 20px;
+    }
+    .wrap {
+      max-width: 900px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+    }
+    .stream {
+      background: #111a2b;
+      border: 1px solid #24304a;
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+    .title {
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .meta {
+      margin-top: 6px;
+      color: #9fb3c8;
+    }
+    .desc {
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+    a {
+      color: #58a6ff;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .empty {
+      text-align: center;
+      color: #9fb3c8;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="wrap">
+  <h1>Community-Streams</h1>
+  <div id="streams"></div>
+</div>
+
+<script>
+  const SUPABASE_URL = "https://DEIN-PROJEKT.supabase.co";
+  const SUPABASE_ANON_KEY = "DEIN-ANON-KEY";
+
+  const supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
+
+  async function loadStreams() {
+    const container = document.getElementById("streams");
+
+    const { data, error } = await supabase
+      .from("community_streams")
+      .select("*")
+      .order("scheduled_at", { ascending: true });
+
+    if (error) {
+      container.innerHTML =
+        '<div class="empty">Fehler beim Laden der Streams.</div>';
+      console.error(error);
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      container.innerHTML =
+        '<div class="empty">Aktuell sind keine Streams eingetragen.</div>';
+      return;
+    }
+
+    container.innerHTML = "";
+
+    data.forEach(stream => {
+      const startsAt = stream.scheduled_at;
+      const url = stream.twitch_url;
+
+      let dateText = "Termin folgt";
+      if (startsAt) {
+        const date = new Date(startsAt);
+        dateText = date.toLocaleString("de-DE", {
+          weekday: "short",
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+      }
+
+      const div = document.createElement("div");
+      div.className = "stream";
+
+      div.innerHTML = `
+        <div class="title">${stream.title || "Stream"}</div>
+        <div class="meta">
+          Streamer: ${stream.streamer || "Unbekannt"}<br>
+          Termin: ${dateText}
+        </div>
+        ${stream.description ? `<div class="desc">${stream.description}</div>` : ""}
+        ${url ? `<p><a href="${url}" target="_blank" rel="noopener">Zum Stream</a></p>` : ""}
+      `;
+
+      container.appendChild(div);
+    });
+  }
+
+  loadStreams();
+</script>
+
+</body>
+</html>

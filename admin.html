@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin – Commando Zentrale</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0b1220;
+      color: #e6edf3;
+      margin: 0;
+      padding: 20px;
+    }
+    .box {
+      max-width: 640px;
+      margin: auto;
+      background: #111a2b;
+      padding: 24px;
+      border-radius: 12px;
+      border: 1px solid #24304a;
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 26px;
+    }
+    label {
+      display: block;
+      margin-top: 14px;
+      font-weight: bold;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      border-radius: 8px;
+      border: 1px solid #33415c;
+      background: #0b1220;
+      color: #e6edf3;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 18px;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: #2f81f7;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .status {
+      margin-top: 14px;
+      font-weight: bold;
+    }
+    .error {
+      color: #ff6b6b;
+    }
+    .success {
+      color: #4ade80;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="box">
+  <h1>Admin – Stream eintragen</h1>
+
+  <div id="login-box">
+    <label>E-Mail</label>
+    <input id="email" type="email" placeholder="deine@email.de">
+
+    <label>Passwort</label>
+    <input id="password" type="password" placeholder="Passwort">
+
+    <button onclick="login()">Anmelden</button>
+    <div id="login-status" class="status"></div>
+  </div>
+
+  <div id="admin-box" class="hidden">
+    <label>Titel</label>
+    <input id="title" placeholder="z. B. Ranked-Abend">
+
+    <label>Streamer</label>
+    <input id="streamer" placeholder="z. B. Commando">
+
+    <label>Termin</label>
+    <input id="starts-at" type="datetime-local">
+
+    <label>Beschreibung</label>
+    <textarea id="description" rows="4" placeholder="Worum geht es?"></textarea>
+
+    <label>Twitch-Link</label>
+    <input id="url" placeholder="https://twitch.de/commando">
+
+    <button id="save-btn" onclick="saveStream()">Speichern</button>
+    <div id="save-status" class="status"></div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = "https://hxporlqdzjvuhgvwcpkm.supabase.co";
+  const SUPABASE_ANON_KEY = "DEIN-ANON-KEY";
+
+  const supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
+
+  async function login() {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const status = document.getElementById("login-status");
+
+    status.className = "status";
+    status.textContent = "Anmeldung läuft...";
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      status.className = "status error";
+      status.textContent = "Anmeldung fehlgeschlagen: " + error.message;
+      return;
+    }
+
+    document.getElementById("login-box").classList.add("hidden");
+    document.getElementById("admin-box").classList.remove("hidden");
+    status.textContent = "";
+  }
+
+  async function saveStream() {
+    const title = document.getElementById("title").value.trim();
+    const streamer = document.getElementById("streamer").value.trim();
+    const startsAt = document.getElementById("starts-at").value;
+    const description = document.getElementById("description").value.trim();
+    const url = document.getElementById("url").value.trim();
+
+    const status = document.getElementById("save-status");
+    const button = document.getElementById("save-btn");
+
+    status.className = "status";
+    status.textContent = "";
+
+    if (!title || !streamer || !startsAt || !url) {
+      status.className = "status error";
+      status.textContent = "Bitte Titel, Streamer, Termin und Twitch-Link ausfüllen.";
+      return;
+    }
+
+    button.disabled = true;
+    status.textContent = "Speichern läuft...";
+
+    const { error } = await supabase
+      .from("community_streams")
+      .insert({
+        title,
+        streamer,
+        scheduled_at: startsAt,
+        description: description || null,
+        twitch_url: url
+      });
+
+    button.disabled = false;
+
+    if (error) {
+      status.className = "status error";
+      status.textContent = "Fehler beim Speichern: " + error.message;
+      console.error(error);
+      return;
+    }
+
+    status.className = "status success";
+    status.textContent = "Stream wurde gespeichert.";
+
+    document.getElementById("title").value = "";
+    document.getElementById("streamer").value = "";
+    document.getElementById("starts-at").value = "";
+    document.getElementById("description").value = "";
+    document.getElementById("url").value = "";
+  }
+</script>
+
+</body>
+</html>
