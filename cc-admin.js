@@ -47,7 +47,7 @@ async function streamsLaden() {
   const { data, error } = await db
     .from("community_streams")
     .select("*")
-    .order("starts_at", { ascending: true });
+    .order("scheduled_at", { ascending: true });
 
   records.innerHTML = "";
 
@@ -64,7 +64,7 @@ async function streamsLaden() {
   }
 
   for (const stream of data) {
-    const zeit = new Date(stream.starts_at);
+    const zeit = new Date(stream.scheduled_at);
     const karte = document.createElement("article");
     karte.className = "card";
 
@@ -76,7 +76,7 @@ async function streamsLaden() {
         <p><strong>Streamer:</strong> ${stream.streamer}</p>
         <p><strong>Termin:</strong> ${zeit.toLocaleString("de-DE")}</p>
         <p>${stream.description || ""}</p>
-        <a class="btn" href="${stream.url}" target="_blank" rel="noopener noreferrer">Stream öffnen</a>
+        <a class="btn" href="${stream.twitch_url}" target="_blank" rel="noopener noreferrer">Stream öffnen</a>
       </div>
     `;
 
@@ -89,8 +89,8 @@ async function streamsLaden() {
 
       document.getElementById("title").value = stream.title;
       document.getElementById("streamer").value = stream.streamer;
-      document.getElementById("url").value = stream.url;
-      document.getElementById("starts").value = new Date(stream.starts_at)
+      document.getElementById("url").value = stream.twitch_url;
+      document.getElementById("starts").value = new Date(stream.scheduled_at)
         .toISOString()
         .slice(0, 16);
       document.getElementById("description").value = stream.description || "";
@@ -183,8 +183,8 @@ streamForm.addEventListener("submit", async (ereignis) => {
   const eintrag = {
     title: titel,
     streamer,
-    url: link,
-    starts_at: new Date(zeit).toISOString(),
+    twitch_url: link,
+    scheduled_at: new Date(zeit).toISOString(),
     description: beschreibung
   };
 
